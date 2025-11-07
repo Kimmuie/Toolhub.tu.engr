@@ -1,34 +1,37 @@
+import { BrowserRouter as Router, Routes, Route, useLocation, useParams } from "react-router-dom";
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Navbar from "./components/Navbar";
+import PageBorrow from "./pages/pageBorrow";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+const AppContent = () => {
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Navbar />
+      <div
+        className="navbar-container"
+      >
+        <Routes>
+          <Route path="/" element={<PageBorrow />} />
+          <Route path="/borrow" element={<PageBorrow />} />
+          {/* <Route path="/" element={<Management />} />
+          <Route path="/management" element={<Management />} />
+          <Route path="/management/:rentalId" element={<RentalDetail />} />
+          <Route path="/financial" element={<Financial />} />
+          <Route path="/map" element={<GoogleMap />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/shareRental/:id" element={<ShareRental />} />
+          <Route path="*" element={<NotFound />} /> */}
+        </Routes>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   )
 }
 
