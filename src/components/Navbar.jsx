@@ -1,6 +1,7 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 const Navbar = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuItems = [
@@ -13,9 +14,9 @@ const Navbar = () => {
     <>
       <div className="relative flex w-full h-20 bg-customWhite items-center border-b-3 border-b-customYellow z-40">
         <div className="flex w-full items-center justify-between pl-6 pr-6">
-          <div className="hidden md:flex flex-row items-center gap-2 cursor-pointer" onClick={() => window.location.reload()}>
-            <img src="vite.svg" width="40" height="40" alt="logoEasylandlord" />
-            <div className="text-customBlack text-lg font-inter font-semibold">ToolHub</div>
+          <div className="hidden md:flex flex-row items-center gap-2 cursor-pointer" onClick={() => navigate("/borrow")}>
+            <img src="ToolhubLogo.png" width="65" height="65" alt="logo" />
+            <div className="text-customBlack text-lg font-noto font-semibold">ToolHub</div>
           </div>
           {/* Desktop Navigation */}
           <div className="hidden md:flex gap-6">
@@ -24,7 +25,7 @@ const Navbar = () => {
                 key={item.name}
                 to={item.paths[0]}
                 className={({ isActive }) =>
-                  `relative text-lg font-prompt text-customBlack font-semibold ${
+                  `relative text-lg font-noto text-customBlack font-semibold ${
                     item.paths.includes(location.pathname)
                       ? "text-customYellow cursor-default  pointer-events-none"
                       : "hover:opacity-50"
@@ -65,7 +66,7 @@ const Navbar = () => {
             <NavLink
               key={item.name}
               to={item.paths[0]}
-              className={`w-full text-center text-customBlackw py-2 text-lg font-prompt font-semibold border-b border-customYellow 
+              className={`w-full text-center text-customBlackw py-2 text-lg font-noto font-semibold border-b border-customYellow 
                 ${item.paths.includes(location.pathname) && "text-customYellow"}`}
               onClick={() => setMenuOpen(false)}
             >

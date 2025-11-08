@@ -1,9 +1,15 @@
+@font-face {
+  font-family: "noto";
+  src: url("../public/fonts/NotoSansThai-Regular.ttf") format("truetype");
+}
+
 @import "tailwindcss";
 
 @theme {
-  --color-customRed: #88191b;
+  --font-noto: "noto", sans-serif;
+  --color-customRed: #973735;
   --color-customYellow: #FCB53B;
-  --color-customLightYellow: #FF9A00;
+  --color-customDarkYellow: #FF9A00;
   --color-customWhite: #ffffff;
   --color-customBlack: #333333;
 }
@@ -16,6 +22,13 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow-y: hidden;
+}
+
+.navbar-container {
+  background: var(--color-customWhite);
+  height: calc(100% - 40px);
+  overflow-y: auto;
 }
 
 ::-webkit-scrollbar {
@@ -31,5 +44,14 @@ html, body, #root {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-customLightYellow);
+  background-color: var(--color-customDarkYellow);
+}
+
+.text-stroke-1 {
+    -webkit-text-stroke: 1px var(--color-customBlack);
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  cursor: pointer;
 }

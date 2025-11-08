@@ -2,6 +2,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useParams } from "
 import { useState } from 'react'
 import Navbar from "./components/Navbar";
 import PageBorrow from "./pages/pageBorrow";
+import PageStatus from "./pages/pageStatus";
+import PagePolicy from "./pages/pagePolicy";
+import PageNotFound from "./pages/pageNotFound";
 
 const AppContent = () => {
   return (
@@ -13,14 +16,9 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<PageBorrow />} />
           <Route path="/borrow" element={<PageBorrow />} />
-          {/* <Route path="/" element={<Management />} />
-          <Route path="/management" element={<Management />} />
-          <Route path="/management/:rentalId" element={<RentalDetail />} />
-          <Route path="/financial" element={<Financial />} />
-          <Route path="/map" element={<GoogleMap />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/shareRental/:id" element={<ShareRental />} />
-          <Route path="*" element={<NotFound />} /> */}
+          <Route path="/status" element={<PageStatus />} />
+          <Route path="/policy" element={<PagePolicy />} />
+          <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
     </>
