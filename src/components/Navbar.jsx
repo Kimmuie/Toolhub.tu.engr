@@ -45,7 +45,7 @@ const Navbar = () => {
           {/* Mobile Menu Icon */}
           <div className="md:hidden flex items-center">
             <button onClick={() => setMenuOpen(!menuOpen)}>
-              <img src="vite.svg" width="40" height="40" alt="menu icon" />
+              <img src="ToolhubLogo.png" width="40" height="40" alt="menu icon" />
             </button>
           </div>
         </div>
