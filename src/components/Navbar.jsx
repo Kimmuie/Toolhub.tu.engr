@@ -14,7 +14,7 @@ const Navbar = () => {
     <>
       <div className="relative flex w-full h-20 bg-customWhite items-center border-b-3 border-b-customYellow z-40">
         <div className="flex w-full items-center justify-between pl-6 pr-6">
-          <div className="hidden md:flex flex-row items-center gap-2 cursor-pointer" onClick={() => navigate("/borrow")}>
+          <div className="flex flex-row items-center gap-2 cursor-pointer" onClick={() => navigate("/borrow")}>
             <img src="ToolhubLogo.png" width="65" height="65" alt="logo" />
             <div className="text-customBlack text-lg font-noto font-semibold">ToolHub</div>
           </div>
@@ -45,7 +45,7 @@ const Navbar = () => {
           {/* Mobile Menu Icon */}
           <div className="md:hidden flex items-center">
             <button onClick={() => setMenuOpen(!menuOpen)}>
-              <img src="ToolhubLogo.png" width="40" height="40" alt="menu icon" />
+              <img src={menuOpen ? "iconMenuOpen.svg" : "iconMenuClose.svg"} width="70" height="55" alt="menu icon" />
             </button>
           </div>
         </div>

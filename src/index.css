@@ -27,12 +27,13 @@ html, body, #root {
 
 .navbar-container {
   background: var(--color-customWhite);
-  height: calc(100% - 40px);
+  height: calc(100% - 80px);
   overflow-y: auto;
 }
 
 ::-webkit-scrollbar {
   width: 15px;
+  border: 2px red solid;
 }
 
 ::-webkit-scrollbar-track {
