@@ -3,15 +3,15 @@ import React, { useState, useEffect, useContext } from "react";
 const PageStatus = () => {
   const [changeLanguage, setChangeLanguage] = useState(true);
   const borrowedList = [
-      { name: "ชื่ออุปกรณ์ A", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ B", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
-      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: 2 },
+      { name: "ชื่ออุปกรณ์ A", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ B", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
+      { name: "ชื่ออุปกรณ์ C", pickDate: "02/09/2550", returnDate: "03/09/2550", quantity: 4 , returned: true },
   ];
   return (
     <div className="w-full h-full flex flex-row gap-8 items-center justify-center z-100 bg-customRed py-5"
@@ -46,8 +46,7 @@ const PageStatus = () => {
               <span className="flex items-center justify-center w-full font-noto font-extrabold text-customBlack text-sm sm:text-lg px-2 py-2 border-r-2 border-customYellow">วันรับอุปกรณ์</span>
               <span className="flex items-center justify-center w-full font-noto font-extrabold text-customBlack text-sm sm:text-lg px-2 py-2 border-r-2 border-customYellow">วันคืนอุปกรณ์</span>
               <span className="flex items-center justify-center w-full font-noto font-extrabold text-customBlack text-sm sm:text-lg px-2 py-2 border-r-2 border-customYellow">จำนวน</span>
-              <span className="flex items-center justify-center w-full font-noto font-extrabold text-customBlack text-sm sm:text-lg px-2 py-2 ">จำนวนที่คืน</span>
-              <span className="w-18"></span>
+              <span className="flex items-center justify-center w-full font-noto font-extrabold text-customBlack text-sm sm:text-lg px-2 py-2 ">สถานะ</span>
             </div>
           {borrowedList.length > 0 ? (
             <div className="max-h-110 sm:max-h-90 xl:max-h-60 overflow-y-auto">
@@ -57,7 +56,7 @@ const PageStatus = () => {
                   <span className="flex items-center justify-center w-full font-noto font-regular text-customBlack text-xs sm:text-md px-2 py-1 border-r-2 border-customYellow">{item.pickDate}</span>
                   <span className="flex items-center justify-center w-full font-noto font-regular text-customBlack text-xs sm:text-md px-2 py-1 border-r-2 border-customYellow">{item.returnDate}</span>
                   <span className="flex items-center justify-center w-full font-noto font-regular text-customBlack text-xs sm:text-md px-2 py-1 border-r-2 border-customYellow">{item.quantity}</span>
-                  <span className="flex items-center justify-center w-full font-noto font-regular text-customBlack text-xs sm:text-md px-2 py-1 ">{item.returned}</span>
+                  <span className="flex items-center justify-center w-full font-noto font-regular text-customBlack text-xs sm:text-md px-2 py-1 ">{item.returned ? ("✔"):("✘")}</span>
                 </div>
             ))}
             </div>

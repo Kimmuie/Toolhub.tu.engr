@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { doc, updateDoc, increment, collection, addDoc, Timestamp, getDocs, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../components/firebase';
 
 const PageBorrow = () => {
   // State for form inputs
@@ -12,10 +14,13 @@ const PageBorrow = () => {
   const [toolQuantities, setToolQuantities] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [toolsList, setToolsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const toolsList = [
+  // Default tools list (fallback if inventory is empty)
+  const defaultToolsList = [
     { id: 1, name: "ค้อนหงอน", image: "tools/Hammer.jpg", max: 7 },
-    { id: 2, name: "สว่านไฟฟ้า", image: "tools/Drill.jpg", max: 3 },
+    { id: 2, name: "สว่านไฟฟ้า", image: "tools/Drill.jpg", max: 4 },
     { id: 3, name: "ปืนยิงกาวร้อน (5/16 นิ้ว)", image: "tools/Gluegun.jpg", max: 3 },
     { id: 4, name: "ชุดคีมขนาดเล็ก", image: "tools/Pilers.jpg", max: 5 },
     { id: 5, name: "เลื่อยลันดา", image: "tools/Saw.jpg", max: 5 },
@@ -23,104 +28,186 @@ const PageBorrow = () => {
     { id: 7, name: "ตลับเมตรยาว 5 เมตร", image: "tools/TapeMeasure.jpg", max: 7 },
   ];
 
-  const handleToolQuantityChange = (id, name, value) => {
-    const quantity = Math.max(0, Math.min(value, toolsList.find(t => t.id === id).max));
-    console.log('Tool quantity changed:', { id, name, quantity });
-    setToolQuantities(prev => ({
-      ...prev,
-      [id]: { name, quantity }
-    }));
+  // Fetch inventory data from Firestore on component mount
+  
+    const fetchInventory = async () => {
+      try {
+        setIsLoading(true);
+        const inventorySnapshot = await getDocs(collection(db, "toolsInventory"));
+
+        if (inventorySnapshot.empty) {
+          console.log("No inventory found, using default tools list");
+          setToolsList(defaultToolsList);
+          return;
+        }
+
+        const inventoryData = inventorySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          const tool = defaultToolsList.find((t) => t.id === data.id);
+
+          return {
+            id: data.id,
+            name: doc.id, // use document name (like "ค้อนหงอน")
+            image: data.image || tool?.image || "",
+            max: data.maxQuantity || tool?.max || 0,
+          };
+        });
+
+        // ✅ Sort by ID
+        inventoryData.sort((a, b) => a.id - b.id);
+
+        console.log("Fetched inventory:", inventoryData);
+        setToolsList(inventoryData.length > 0 ? inventoryData : defaultToolsList);
+      } catch (error) {
+        console.error("Error fetching inventory:", error);
+        setToolsList(defaultToolsList);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const handleToolQuantityChange = (toolId, toolName, value) => {
+    const quantity = parseInt(value) || 0;
+    
+    if (quantity === 0) {
+      const newQuantities = { ...toolQuantities };
+      delete newQuantities[toolId];
+      setToolQuantities(newQuantities);
+    } else {
+      setToolQuantities(prev => ({
+        ...prev,
+        [toolId]: {
+          name: toolName,
+          quantity: quantity
+        }
+      }));
+    }
   };
 
   const handleSubmit = async () => {
-    console.log('=== SUBMIT BUTTON CLICKED ===');
-    console.log('Current state:', {
-      username,
-      password: password ? '***' : 'empty',
-      pickupDate,
-      pickupTime,
-      returnDate,
-      returnTime,
-      agreedToPolicy,
-      toolQuantities
-    });
-
-    setMessage({ type: '', text: '' });
-    setIsSubmitting(true);
-
     try {
-      // Client-side validation
-      if (!username || !password) {
-        console.log('❌ Validation failed: Missing username or password');
-        setMessage({ type: 'error', text: 'กรุณากรอก Username และ Password' });
-        setIsSubmitting(false);
+      setMessage({ type: '', text: '' });
+    
+      if (!username.trim()) {
+        setMessage({ type: 'error', text: 'กรุณากรอก Username' });
         return;
       }
-
-      if (!pickupDate || !pickupTime || !returnDate || !returnTime) {
-        console.log('❌ Validation failed: Missing date/time fields');
-        setMessage({ type: 'error', text: 'กรุณากรอกวันและเวลาทั้งหมด' });
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!agreedToPolicy) {
-        console.log('❌ Validation failed: Policy not agreed');
-        setMessage({ type: 'error', text: 'กรุณายอมรับข้อกำหนดการใช้งาน' });
-        setIsSubmitting(false);
-        return;
-      }
-
-      const selectedTools = Object.values(toolQuantities).filter(tool => tool.quantity > 0);
-      console.log('Selected tools:', selectedTools);
       
-      if (selectedTools.length === 0) {
-        console.log('❌ Validation failed: No tools selected');
+      if (!password.trim()) {
+        setMessage({ type: 'error', text: 'กรุณากรอก Password' });
+        return;
+      }
+      
+      if (!pickupDate) {
+        setMessage({ type: 'error', text: 'กรุณาเลือกวันรับอุปกรณ์' });
+        return;
+      }
+      
+      if (!pickupTime) {
+        setMessage({ type: 'error', text: 'กรุณาเลือกเวลารับอุปกรณ์' });
+        return;
+      }
+      
+      if (!returnDate) {
+        setMessage({ type: 'error', text: 'กรุณาเลือกวันคืนอุปกรณ์' });
+        return;
+      }
+      
+      if (!returnTime) {
+        setMessage({ type: 'error', text: 'กรุณาเลือกเวลาคืนอุปกรณ์' });
+        return;
+      }
+      
+      if (Object.keys(toolQuantities).length === 0) {
         setMessage({ type: 'error', text: 'กรุณาเลือกอุปกรณ์อย่างน้อย 1 รายการ' });
-        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!agreedToPolicy) {
+        setMessage({ type: 'error', text: 'กรุณายอมรับข้อกำหนดการใช้งาน' });
+        return;
+      }
+      
+      const pickupDateTime = new Date(`${pickupDate}T${pickupTime}`);
+      const returnDateTime = new Date(`${returnDate}T${returnTime}`);
+      
+      if (returnDateTime <= pickupDateTime) {
+        setMessage({ type: 'error', text: 'วันที่คืนต้องอยู่หลังวันที่รับอุปกรณ์' });
         return;
       }
 
-      console.log('✅ All validations passed');
-
-      const payload = {
-        username,
-        password,
-        pickupDate,
-        pickupTime,
-        returnDate,
-        returnTime,
-        agreedToPolicy,
-        toolQuantities
+      // Check if requested quantities exceed available quantities
+      for (const [toolId, data] of Object.entries(toolQuantities)) {
+        const tool = toolsList.find(t => t.id === parseInt(toolId));
+        if (tool && data.quantity > tool.max) {
+          setMessage({ 
+            type: 'error', 
+            text: `${tool.name} มีเพียง ${tool.max} ชิ้นที่สามารถยืมได้` 
+          });
+          return;
+        }
+      }
+      
+      setIsSubmitting(true);
+      const borrowData = {
+        username: username,
+        password: password,
+        tools: Object.entries(toolQuantities).map(([id, data]) => ({
+          toolId: parseInt(id),
+          toolName: data.name,
+          quantity: data.quantity,
+          status: false,
+        })),
+        pickupDate: pickupDate,
+        pickupTime: pickupTime,
+        returnDate: returnDate,
+        returnTime: returnTime,
+        createdAt: Timestamp.now(),
       };
 
-      console.log('Sending payload to API:', payload);
-
-      // Send to API
-      const response = await fetch('/api/borrow', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        data = {};
+      // Add borrow request to Firestore
+      const borrowRef = await addDoc(collection(db, 'borrowRequests'), borrowData);
+      console.log('Borrow request created with ID:', borrowRef.id);
+      
+      // Update Inventory
+      for (const [toolId, data] of Object.entries(toolQuantities)) {
+          try {
+              // 1. Find the tool object from toolsList using the numeric toolId
+              const toolItem = toolsList.find(t => t.id === parseInt(toolId));
+              
+              if (!toolItem) {
+                  console.error(`Tool with ID ${toolId} not found in current inventory list.`);
+                  continue; // Skip this tool if not found
+              }
+              const documentId = toolItem.name; 
+              const toolRef = doc(db, 'toolsInventory', documentId); 
+              const toolDoc = await getDoc(toolRef);
+              
+              if (toolDoc.exists()) {
+                  // Update existing inventory
+                  await updateDoc(toolRef, {
+                      maxQuantity: increment(-data.quantity)
+                  });
+                  console.log(`Updated inventory for document ${documentId}: -${data.quantity}`);
+              }
+          } catch (invError) {
+              console.error(`Error updating inventory for tool ${toolId}:`, invError);
+          }
+          fetchInventory()
       }
 
-      console.log('Response data:', data);
-
-      if (response.ok) {
-        console.log('✅ SUCCESS: Request submitted');
-        setMessage({ type: 'success', text: 'ส่งคำขอยืมสำเร็จ!' });
-        // Reset form
+      // Success message
+      setMessage({ 
+        type: 'success', 
+        text: 'ส่งคำขอยืมอุปกรณ์เรียบร้อยแล้ว! คลังอุปกรณ์ได้รับการอัปเดต' 
+      });
+      
+      // Reset form
+      setTimeout(() => {
         setUsername('');
         setPassword('');
         setPickupDate('');
@@ -129,19 +216,16 @@ const PageBorrow = () => {
         setReturnTime('');
         setAgreedToPolicy(false);
         setToolQuantities({});
-        console.log('Form reset complete');
-      } else {
-        console.log('❌ ERROR: Server returned error');
-        setMessage({ type: 'error', text: data.message || 'เกิดข้อผิดพลาด' });
-      }
+        setMessage({ type: '', text: '' });
+      }, 3000);
+      
     } catch (error) {
-      console.error('❌ CATCH ERROR:', error);
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      setMessage({ type: 'error', text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์' });
+      console.error('Error submitting borrow request:', error);
+      setMessage({ 
+        type: 'error', 
+        text: `เกิดข้อผิดพลาด: ${error.message}` 
+      });
     } finally {
-      console.log('=== SUBMIT COMPLETE ===');
       setIsSubmitting(false);
     }
   };
@@ -157,51 +241,62 @@ const PageBorrow = () => {
     >
       {/* Tool Selection */}
       <div className="relative flex flex-col w-full sm:w-3xl h-xl">
-        {/* Black shadow behind the card */}
         <div className="absolute inset-0 bg-customYellow rounded-2xl translate-x-1 md:translate-x-1.5 translate-y-1 md:translate-y-1.5"></div>
         <div className="z-10 bg-customWhite h-full pt-8 flex flex-col items-center justify-center rounded-2xl border-3 border-customYellow gap-4 py-2">
           <span className="flex w-full items-center justify-center font-noto font-extrabold text-xl">เลือกจำนวนและอุปกรณ์ที่ต้องการยืม</span>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-h-120 overflow-y-auto px-5">
-            {toolsList.map((item) => (
-              <div key={item.id} className="w-40 sm:w-50 flex flex-col items-center">
-                <img src={item.image} alt="logo" className="w-full border-2 border-customYellow rounded-t-lg" />
-                <span className="flex items-start w-full font-noto font-extrabold text-customBlack text-lg bg-customYellow px-2">{item.name}</span>
-                <div className="flex flex-row w-full">
-                  <input 
-                    type="number" 
-                    placeholder="0"  
-                    min={0} 
-                    max={item.max}
-                    value={toolQuantities[item.id]?.quantity || ''}
-                    onChange={(e) => handleToolQuantityChange(item.id, item.name, e.target.value)}
-                    className="w-full border-2 border-customYellow rounded-bl-lg px-4 py-2 font-noto text-customBlack text-lg focus:outline-none"
-                  />
-                  <span className="flex items-center justify-center w-30 rounded-br-lg font-noto font-bold text-customBlack text-md bg-customYellow px-1">Max {item.max}</span>
+          
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <span className="font-noto text-lg text-gray-500">กำลังโหลดข้อมูลอุปกรณ์...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-h-120 overflow-y-auto px-5">
+              {toolsList.map((item) => (
+                <div key={item.id} className="w-40 sm:w-50 flex flex-col items-center">
+                  <img src={item.image} alt="logo" className="w-full border-2 border-customYellow rounded-t-lg" />
+                  <span className="flex items-start w-full font-noto font-extrabold text-customBlack text-lg bg-customYellow px-2">{item.name}</span>
+                  <div className="flex flex-row w-full">
+                    <input 
+                      type="number" 
+                      placeholder="0"  
+                      min={0} 
+                      max={item.max}
+                      value={toolQuantities[item.id]?.quantity || ''}
+                      onChange={(e) => handleToolQuantityChange(item.id, item.name, e.target.value)}
+                      disabled={item.max === 0}
+                      className={`w-full border-2 border-customYellow rounded-bl-lg px-4 py-2 font-noto text-customBlack text-lg focus:outline-none ${
+                        item.max === 0 ? 'bg-gray-200 cursor-not-allowed' : ''
+                      }`}
+                    />
+                    <span className={`flex items-center justify-center w-30 rounded-br-lg font-noto font-bold text-customBlack text-md px-1 ${
+                      item.max === 0 ? 'bg-red-300' : 'bg-customYellow'
+                    }`}>
+                      Max {item.max}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       
       {/* Input Form */}
       <div className="relative flex flex-col w-full sm:w-3xl xl:w-xl h-xl">
-        {/* Black shadow behind the card */}
         <div className="absolute inset-0 bg-customYellow rounded-2xl translate-x-1 md:translate-x-1.5 translate-y-1 md:translate-y-1.5"></div>
         <div className="z-10 bg-customWhite h-full pt-8 flex flex-col items-center rounded-2xl border-3 border-customYellow pb-4">
           <img src="ToolhubLogo.png" width="70" height="80" alt="logo" />
-          <div className="px-2 sm:px-0 w-full sm:w-lg flex flex-col items-center gap-2">
-            {/* Message Display */}
-            {message.text && (
-              <div className={`w-full px-4 py-2 rounded-2xl font-noto text-center ${
-                message.type === 'success' 
-                  ? 'bg-green-100 text-green-800 border-2 border-green-500' 
-                  : 'bg-red-100 text-red-800 border-2 border-red-500'
-              }`}>
-                {message.text}
-              </div>
-            )}
+          {message.text && (
+            <div className={`absolute w-sm px-4 py-2 rounded-2xl font-noto text-center ${
+              message.type === 'success' 
+                ? 'bg-green-100 text-green-800 border-2 border-green-500' 
+                : 'bg-red-100 text-red-800 border-2 border-red-500'
+            }`}>
+              {message.text}
+            </div>
+          )}
 
+          <div className="px-2 sm:px-0 w-full sm:w-lg flex flex-col items-center gap-2">
             <span className="flex items-start w-full font-noto font-extrabold text-customDarkYellow text-lg">Username</span>
             <input 
               type="text" 
@@ -221,7 +316,6 @@ const PageBorrow = () => {
               className="w-full border-2 border-customYellow rounded-2xl px-4 py-2 font-noto text-customBlack text-lg focus:outline-none"
             />
             
-            {/* Pickup Date */}
             <div className="flex flex-col sm:flex-row w-full gap-2">
               <div className="flex flex-col w-full">
                 <span className="flex items-start w-full font-noto font-extrabold text-customDarkYellow text-lg">วันรับอุปกรณ์</span>
@@ -243,7 +337,6 @@ const PageBorrow = () => {
               </div>
             </div>
             
-            {/* Return Date */}
             <div className="flex flex-col sm:flex-row w-full gap-2">
               <div className="flex flex-col w-full">
                 <span className="flex items-start w-full font-noto font-extrabold text-customDarkYellow text-lg">วันคืนอุปกรณ์</span>
@@ -265,7 +358,6 @@ const PageBorrow = () => {
               </div>
             </div>
             
-            {/* Policy Approval */}
             <label className="w-full flex flex-row pt-5 items-start gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -278,17 +370,13 @@ const PageBorrow = () => {
               </span>
             </label>
             
-            {/* Submit Button */}
             <button 
               className={`w-xs sm:w-sm border-2 border-customDarkYellow rounded-2xl px-4 py-2 font-noto text-customBlack text-lg ${
                 isSubmitting 
                   ? 'bg-gray-300 cursor-not-allowed' 
                   : 'bg-customYellow hover:bg-customDarkYellow cursor-pointer'
               }`}
-              onClick={(e) => {
-                console.log('Button clicked, event:', e);
-                handleSubmit();
-              }}
+              onClick={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? 'กำลังส่งคำขอ...' : 'ยืนยันการยืม'}
