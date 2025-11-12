@@ -18,15 +18,15 @@ const PageBorrow = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Default tools list (fallback if inventory is empty)
-  const defaultToolsList = [
-    { id: 1, name: "ค้อนหงอน", image: "tools/Hammer.jpg", max: 7 },
-    { id: 2, name: "สว่านไฟฟ้า", image: "tools/Drill.jpg", max: 4 },
-    { id: 3, name: "ปืนยิงกาวร้อน (5/16 นิ้ว)", image: "tools/Gluegun.jpg", max: 3 },
-    { id: 4, name: "ชุดคีมขนาดเล็ก", image: "tools/Pilers.jpg", max: 5 },
-    { id: 5, name: "เลื่อยลันดา", image: "tools/Saw.jpg", max: 5 },
-    { id: 6, name: "ไขควง", image: "tools/Screwdriver.jpg", max: 12 },
-    { id: 7, name: "ตลับเมตรยาว 5 เมตร", image: "tools/TapeMeasure.jpg", max: 7 },
-  ];
+  // const defaultToolsList = [
+  //   { id: 1, name: "ค้อนหงอน", image: "tools/Hammer.jpg", max: 7 },
+  //   { id: 2, name: "สว่านไฟฟ้า", image: "tools/Drill.jpg", max: 4 },
+  //   { id: 3, name: "ปืนยิงกาวร้อน (5/16 นิ้ว)", image: "tools/Gluegun.jpg", max: 3 },
+  //   { id: 4, name: "ชุดคีมขนาดเล็ก", image: "tools/Pilers.jpg", max: 5 },
+  //   { id: 5, name: "เลื่อยลันดา", image: "tools/Saw.jpg", max: 5 },
+  //   { id: 6, name: "ไขควง", image: "tools/Screwdriver.jpg", max: 12 },
+  //   { id: 7, name: "ตลับเมตรยาว 5 เมตร", image: "tools/TapeMeasure.jpg", max: 7 },
+  // ];
 
   // Fetch inventory data from Firestore on component mount
   
@@ -37,19 +37,18 @@ const PageBorrow = () => {
 
         if (inventorySnapshot.empty) {
           console.log("No inventory found, using default tools list");
-          setToolsList(defaultToolsList);
+          // setToolsList(defaultToolsList);
           return;
         }
 
         const inventoryData = inventorySnapshot.docs.map((doc) => {
           const data = doc.data();
-          const tool = defaultToolsList.find((t) => t.id === data.id);
 
           return {
             id: data.id,
             name: doc.id, // use document name (like "ค้อนหงอน")
-            image: data.image || tool?.image || "",
-            max: data.maxQuantity || tool?.max || 0,
+            image: data.image ||  "",
+            max: data.maxQuantity || 0,
           };
         });
 
@@ -57,15 +56,15 @@ const PageBorrow = () => {
         inventoryData.sort((a, b) => a.id - b.id);
 
         console.log("Fetched inventory:", inventoryData);
-        setToolsList(inventoryData.length > 0 ? inventoryData : defaultToolsList);
+        setToolsList(inventoryData.length > 0 ? inventoryData : []);
       } catch (error) {
         console.error("Error fetching inventory:", error);
-        setToolsList(defaultToolsList);
+        setToolsList([]);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -258,18 +257,18 @@ const PageBorrow = () => {
                   <div className="flex flex-row w-full">
                     <input 
                       type="number" 
-                      placeholder="0"  
+                      placeholder={item.max === 0 ? "- - Out - -" : "0"}  
                       min={0} 
                       max={item.max}
                       value={toolQuantities[item.id]?.quantity || ''}
                       onChange={(e) => handleToolQuantityChange(item.id, item.name, e.target.value)}
                       disabled={item.max === 0}
                       className={`w-full border-2 border-customYellow rounded-bl-lg px-4 py-2 font-noto text-customBlack text-lg focus:outline-none ${
-                        item.max === 0 ? 'bg-gray-200 cursor-not-allowed' : ''
+                        item.max === 0 ? 'cursor-not-allowed' : ''
                       }`}
                     />
-                    <span className={`flex items-center justify-center w-30 rounded-br-lg font-noto font-bold text-customBlack text-md px-1 ${
-                      item.max === 0 ? 'bg-red-300' : 'bg-customYellow'
+                    <span className={`flex items-center justify-center w-30 rounded-br-lg font-noto font-bold text-md px-1 ${
+                      item.max === 0 ? 'bg-customRed text-customWhite' : 'bg-customYellow text-customBlack '
                     }`}>
                       Max {item.max}
                     </span>
