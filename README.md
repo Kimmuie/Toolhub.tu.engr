@@ -1,7 +1,7 @@
 # 🛠️ ToolHub
 
 <p align="center">
-  <img src="./illustration/ToolhubBanner.png" title="ToolHub" width="100%">
+  <img src="./illustration/ToolhubBanner.jpg" title="ToolHub" width="100%">
 </p>
 
 <p align="center">
